@@ -1,0 +1,86 @@
+generator client {
+  provider     = "prisma-client"
+  output       = "../src/generated/prisma"
+  moduleFormat = "esm"
+}
+
+datasource db {
+  provider = "postgresql"
+}
+
+enum EmailStatus {
+  scheduled
+  processing
+  sent
+  failed
+
+  @@map("email_status")
+}
+
+model User {
+  id              String           @id @default(uuid()) @db.Uuid
+  googleSub       String           @unique @map("google_sub")
+  email           String           @unique
+  name            String
+  avatarUrl       String?          @map("avatar_url")
+  createdAt       DateTime         @default(now()) @map("created_at") @db.Timestamptz(3)
+  updatedAt       DateTime         @updatedAt @map("updated_at") @db.Timestamptz(3)
+  senders         Sender[]
+  emails          Email[]
+  slackConnection SlackConnection?
+
+  @@map("users")
+}
+
+model Sender {
+  id          String   @id @default(uuid()) @db.Uuid
+  ownerId     String   @map("owner_id") @db.Uuid
+  email       String
+  hourlyLimit Int      @map("hourly_limit")
+  createdAt   DateTime @default(now()) @map("created_at") @db.Timestamptz(3)
+  updatedAt   DateTime @updatedAt @map("updated_at") @db.Timestamptz(3)
+  owner       User     @relation(fields: [ownerId], references: [id], onDelete: Cascade)
+  emails      Email[]
+
+  @@unique([ownerId, email], map: "senders_owner_email_unique")
+  @@map("senders")
+}
+
+model Email {
+  id            String      @id @default(uuid()) @db.Uuid
+  ownerId       String      @map("owner_id") @db.Uuid
+  senderId      String      @map("sender_id") @db.Uuid
+  recipient     String
+  subject       String
+  body          String
+  status        EmailStatus @default(scheduled)
+  scheduledAt   DateTime    @map("scheduled_at") @db.Timestamptz(3)
+  sentAt        DateTime?   @map("sent_at") @db.Timestamptz(3)
+  failureReason String?     @map("failure_reason")
+  smtpMessageId String?     @map("smtp_message_id")
+  previewUrl    String?     @map("preview_url")
+  createdAt     DateTime    @default(now()) @map("created_at") @db.Timestamptz(3)
+  updatedAt     DateTime    @updatedAt @map("updated_at") @db.Timestamptz(3)
+  owner         User        @relation(fields: [ownerId], references: [id], onDelete: Cascade)
+  sender        Sender      @relation(fields: [senderId], references: [id])
+
+  @@index([ownerId, status, scheduledAt], map: "emails_owner_status_scheduled_idx")
+  @@index([senderId, scheduledAt], map: "emails_sender_scheduled_idx")
+  @@map("emails")
+}
+
+model SlackConnection {
+  ownerId             String   @id @map("owner_id") @db.Uuid
+  encryptedWebhookUrl String   @map("encrypted_webhook_url")
+  webhookIv           String   @map("webhook_iv")
+  webhookAuthTag      String   @map("webhook_auth_tag")
+  teamId              String   @map("team_id")
+  teamName            String?  @map("team_name")
+  channelId           String   @map("channel_id")
+  channelName         String?  @map("channel_name")
+  createdAt           DateTime @default(now()) @map("created_at") @db.Timestamptz(3)
+  updatedAt           DateTime @updatedAt @map("updated_at") @db.Timestamptz(3)
+  owner               User     @relation(fields: [ownerId], references: [id], onDelete: Cascade)
+
+  @@map("slack_connections")
+}

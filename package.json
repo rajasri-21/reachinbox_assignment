@@ -1,0 +1,34 @@
+{
+  "name": "reachinbox-email-scheduler",
+  "version": "0.0.0",
+  "private": true,
+  "type": "module",
+  "workspaces": [
+    "packages/*",
+    "backend",
+    "worker",
+    "frontend"
+  ],
+  "scripts": {
+    "infra:up": "docker compose up -d",
+    "infra:down": "docker compose down",
+    "infra:logs": "docker compose logs -f",
+    "db:generate": "node --env-file=.env --run db:generate:workspace",
+    "db:generate:workspace": "npm run db:generate -w @reachinbox/db",
+    "db:push": "node --env-file=.env --run db:push:workspace",
+    "db:push:workspace": "npm run db:push -w @reachinbox/db",
+    "dev": "node --env-file=.env --run dev:apps",
+    "dev:apps": "concurrently -k -n backend,worker,frontend \"npm run dev -w @reachinbox/backend\" \"npm run dev -w @reachinbox/worker\" \"npm run dev -w @reachinbox/frontend\"",
+    "build": "npm run build:shared && npm run build:apps",
+    "build:shared": "npm run build -w @reachinbox/contracts && npm run build -w @reachinbox/db && npm run build -w @reachinbox/search",
+    "build:apps": "npm run build -w @reachinbox/backend && npm run build -w @reachinbox/worker && npm run build -w @reachinbox/frontend",
+    "typecheck": "npm run build:shared && npm run typecheck -w @reachinbox/backend && npm run typecheck -w @reachinbox/worker && npm run typecheck -w @reachinbox/frontend",
+    "test": "npm run test --workspaces --if-present"
+  },
+  "devDependencies": {
+    "concurrently": "^9.2.4"
+  },
+  "engines": {
+    "node": ">=22.12.0"
+  }
+}

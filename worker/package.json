@@ -1,0 +1,27 @@
+{
+  "name": "@reachinbox/worker",
+  "version": "0.0.0",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "dev": "tsx watch src/index.ts",
+    "build": "tsc -p tsconfig.json",
+    "start": "node dist/index.js",
+    "typecheck": "tsc -p tsconfig.json --noEmit",
+    "test": "npm run build && node --test 'dist/**/*.test.js'"
+  },
+  "dependencies": {
+    "@reachinbox/contracts": "0.0.0",
+    "@reachinbox/db": "0.0.0",
+    "@reachinbox/search": "0.0.0",
+    "bullmq": "^5.81.4",
+    "ioredis": "^5.11.1",
+    "nodemailer": "^9.0.6"
+  },
+  "devDependencies": {
+    "@types/node": "^22.20.0",
+    "@types/nodemailer": "^8.0.1",
+    "tsx": "^4.23.12",
+    "typescript": "^5.9.3"
+  }
+}
