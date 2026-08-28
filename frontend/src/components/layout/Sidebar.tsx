@@ -99,9 +99,10 @@ export function Sidebar({ user, activeTab, counts, onTabChange, onCompose, onLog
         <button
           type="button"
           onClick={onCompose}
-          className="mt-3 w-full h-8 rounded-full border border-[#10a34a] bg-white text-[#10a34a] text-[13px] font-medium hover:bg-[#ecfdf5] transition-colors focus:outline-none focus-visible:ring-2 focus-visible:ring-[#10a34a]/30"
+          className="mt-3 w-full h-8 rounded-full border border-[#10a34a] bg-[#10a34a] text-white text-[13px] font-medium hover:bg-[#0e8a3e] hover:border-[#0e8a3e] transition-colors focus:outline-none focus-visible:ring-2 focus-visible:ring-[#10a34a]/30 shadow-sm"
+          aria-label="Compose New Email"
         >
-          Compose
+          Compose New Email
         </button>
 
         <div className="mt-6">

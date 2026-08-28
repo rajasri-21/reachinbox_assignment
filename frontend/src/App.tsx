@@ -48,7 +48,7 @@ export default function App(): React.JSX.Element {
       onCompose={handleCompose}
       onLogout={handleLogout}
     >
-      <DashboardPage activeTab={activeTab} />
+      <DashboardPage activeTab={activeTab} onCompose={handleCompose} />
     </AppLayout>
   );
 }

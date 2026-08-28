@@ -15,29 +15,42 @@ Mark an item complete only after the implementation or check is actually complet
 - [x] Use simple tab state (no routing) and compare against Figma for layout/spacing/typography/colors/borders/shadows
 - [x] Run TypeScript typecheck, production build, dev server smoke test, git diff review
 
+## Phase 2 — Main Dashboard + Email Views
+
+- [x] Scheduled Emails view: table with recipient/subject/scheduledAt/status via EmailListItem/EmailStatus contract
+- [x] Scheduled states: loading, empty ("No scheduled emails" + Compose CTA), error, populated
+- [x] Sent Emails view: table with recipient/subject/sentAt/status (sent/failed), failureReason, previewUrl (new tab, rel noopener)
+- [x] Sent states: loading, empty ("No sent emails"), error, populated
+- [x] Pagination: Previous/Next, current page, page of total, showing X–Y of Z, respects backend page/limit
+- [x] Search UI: input with debounced q param, scheduled/sent uses status=scheduled|sent + q + page/limit per frozen contract
+- [x] Compose New Email button: primary placement per Figma, wired for Phase 3 (placeholder alert), not implementing form/CSV yet
+- [x] API client extended (typed getEmails, credentials:include, VITE_API_URL, 401/400/500 handling, no any)
+- [x] Reusable components: EmailTable, EmailStatusBadge, SearchInput, Pagination, LoadingState, EmptyState, ErrorState
+- [x] Reused Phase 1 shell (Sidebar/AppLayout) extended, not rewritten; responsive table overflow, focus/keyboard/a11y checked
+
 ## Implementation (full scope — later phases)
 
 - [ ] Add real Google Identity Services login and send the credential to the backend.
 - [ ] Show authenticated user name, email, avatar, and logout.
-- [ ] Build Scheduled and Sent tabs with loading, empty, error, and populated states.
-- [ ] Keep backend calls in one typed API module with credentials enabled.
+- [x] Build Scheduled and Sent tabs with loading, empty, error, and populated states.
+- [x] Keep backend calls in one typed API module with credentials enabled.
 - [ ] Build the compose flow for sender, subject, body, start, delay, and hourly limit.
 - [ ] Extract, trim, validate, and deduplicate addresses from CSV/text files.
 - [ ] Show detected count and invalid/empty-file feedback.
 - [ ] Submit the frozen scheduling payload and display success/error feedback.
 - [ ] Add Slack connection status, connect redirect, and disconnect behavior.
-- [ ] Add responsive accessible Tailwind styling.
+- [x] Add responsive accessible Tailwind styling.
 
 ## Self-review
 
-- [ ] Frontend typecheck and production build pass.
+- [x] Frontend typecheck and production build pass.
 - [ ] Logged-out users see login; logged-in users see the dashboard.
 - [ ] User identity and logout work with a real Google login.
 - [ ] Recipient parsing handles trimming, duplicates, invalid values, and empty files.
 - [ ] Compose submits the exact frozen schedule contract.
-- [ ] Scheduled, sent, failed, loading, empty, and error states are verified.
+- [x] Scheduled, sent, failed, loading, empty, and error states are verified.
 - [ ] Real Slack connect/disconnect state is reflected after OAuth redirect.
-- [ ] Keyboard access, visible labels, focus states, and mobile layout are checked.
+- [x] Keyboard access, visible labels, focus states, and mobile layout are checked.
 
 ## Phase 1 Self-review
 

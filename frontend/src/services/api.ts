@@ -1,13 +1,20 @@
 /**
  * Typed API module — owns all backend calls.
  * Keeps credentials handling in one place.
- * Real integration (auth/me, google, emails, slack) will be added in Phase 4/5
- * without duplicating fetch logic inside components.
  */
 
 const API_URL = import.meta.env.VITE_API_URL ?? "http://localhost:3000";
 
 type ApiOptions = RequestInit & { auth?: boolean };
+
+export class ApiError extends Error {
+  status: number;
+  constructor(message: string, status: number) {
+    super(message);
+    this.name = "ApiError";
+    this.status = status;
+  }
+}
 
 async function request<T>(path: string, options: ApiOptions = {}): Promise<T> {
   const url = `${API_URL}${path}`;
@@ -20,13 +27,40 @@ async function request<T>(path: string, options: ApiOptions = {}): Promise<T> {
     },
   });
   if (!res.ok) {
-    const body = (await res.json().catch(() => null)) as { error?: string } | null;
-    throw new Error(body?.error ?? `Request failed: ${res.status}`);
+    const body = (await res.json().catch(() => null)) as { error?: string; message?: string } | null;
+    const message = body?.error ?? body?.message ?? `Request failed: ${res.status}`;
+    throw new ApiError(message, res.status);
   }
   return (await res.json()) as T;
 }
 
 export type AuthUser = { id: string; email: string; name: string; avatarUrl: string | null };
+
+// Mirrors frozen contracts in packages/contracts/src/index.ts — kept in sync, not redefined with divergent shape
+export type EmailStatus = "scheduled" | "processing" | "sent" | "failed";
+export type EmailListItem = {
+  id: string;
+  recipient: string;
+  senderEmail: string;
+  subject: string;
+  scheduledAt: string;
+  sentAt: string | null;
+  status: EmailStatus;
+  failureReason: string | null;
+  previewUrl: string | null;
+};
+export type EmailListResponse = {
+  emails: EmailListItem[];
+  page: number;
+  limit: number;
+  total: number;
+};
+export type EmailListQuery = {
+  status?: EmailStatus;
+  q?: string;
+  page?: number;
+  limit?: number;
+};
 
 export const api = {
   getMe: () => request<{ user: AuthUser }>("/api/auth/me"),
@@ -46,6 +80,16 @@ export const api = {
   disconnectSlack: () =>
     request<{ ok: true }>("/api/integrations/slack", { method: "DELETE" }),
   getSlackConnectUrl: () => `${API_URL}/api/integrations/slack/connect`,
+
+  getEmails: (query: EmailListQuery) => {
+    const params = new URLSearchParams();
+    if (query.status) params.set("status", query.status);
+    if (query.q) params.set("q", query.q);
+    if (query.page) params.set("page", String(query.page));
+    if (query.limit) params.set("limit", String(query.limit));
+    const qs = params.toString();
+    return request<EmailListResponse>(`/api/emails${qs ? `?${qs}` : ""}`);
+  },
 };
 
 export { API_URL };
