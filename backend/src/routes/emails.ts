@@ -96,15 +96,21 @@ emailsRouter.get("/", requireAuth, async (req, res, next) => {
     );
 
     if (q) {
-      const result = await searchEmails(searchClient, ownerId, { q, status, page, limit });
-      const response: EmailListResponse = {
-        emails: result.items.map(mapSearchDoc),
-        page: result.page,
-        limit: result.limit,
-        total: result.total,
-      };
-      res.json(response);
-      return;
+      try {
+        const result = await searchEmails(searchClient, ownerId, { q, status, page, limit });
+        const response: EmailListResponse = {
+          emails: result.items.map(mapSearchDoc),
+          page: result.page,
+          limit: result.limit,
+          total: result.total,
+        };
+        res.json(response);
+        return;
+      } catch (searchErr) {
+        // Elasticsearch is a projection; fallback to DB so tenant listing still works when ES down.
+        // eslint-disable-next-line no-console
+        console.error("Elasticsearch search failed, falling back to DB", searchErr);
+      }
     }
 
     const where = { ownerId, ...(status ? { status } : {}) };

@@ -30,6 +30,10 @@ export function createApp() {
   });
 
   const errorHandler: ErrorRequestHandler = (err, _req, res, _next) => {
+    if (err instanceof SyntaxError && (err as unknown as { status?: number }).status === 400) {
+      res.status(400).json({ error: "Invalid JSON" });
+      return;
+    }
     if (err instanceof HttpError) {
       res.status(err.status).json({ error: err.message });
       return;

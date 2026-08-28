@@ -37,7 +37,12 @@ export function setSessionCookie(res: Response, userId: string): void {
 }
 
 export function clearSessionCookie(res: Response): void {
-  res.clearCookie(SESSION_COOKIE, { path: "/" });
+  res.clearCookie(SESSION_COOKIE, {
+    httpOnly: true,
+    secure: env.NODE_ENV === "production",
+    sameSite: "lax",
+    path: "/",
+  });
 }
 
 /** Verifies the session cookie on `req` and returns the authenticated user id, or null. */

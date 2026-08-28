@@ -43,9 +43,13 @@ slackRouter.get("/connect", requireAuth, (req, res) => {
   res.redirect(authorizeUrl.toString());
 });
 
-slackRouter.get("/callback", async (req, res, next) => {
+slackRouter.get("/callback", async (req, res, _next) => {
   try {
-    const { code, state } = req.query;
+    const { code, state, error } = req.query;
+    if (typeof error === "string") {
+      res.redirect(`${env.FRONTEND_URL}/?slack=error`);
+      return;
+    }
     if (typeof state !== "string") {
       throw badRequest("Missing state");
     }
@@ -103,7 +107,9 @@ slackRouter.get("/callback", async (req, res, next) => {
 
     res.redirect(`${env.FRONTEND_URL}/?slack=connected`);
   } catch (err) {
-    next(err);
+    // eslint-disable-next-line no-console
+    console.error(err);
+    res.redirect(`${env.FRONTEND_URL}/?slack=error`);
   }
 });
 
