@@ -12,8 +12,9 @@ This repository is a four-person, five-hour parallel implementation. Keep change
    - Worker or `task/worker`: [`tasks/worker/README.md`](tasks/worker/README.md)
    - Frontend or `task/frontend`: [`tasks/frontend/README.md`](tasks/frontend/README.md)
    - Platform/integration or `task/platform`: [`tasks/platform/README.md`](tasks/platform/README.md)
-5. Run `git status --short` and inspect existing code before editing. Preserve unrelated work.
-6. If the requested task is ambiguous, ask which of the four tasks to execute.
+5. Read and maintain that task's `TODO.md` beside its README.
+6. Run `git status --short` and inspect existing code before editing. Preserve unrelated work.
+7. If the requested task is ambiguous, ask which of the four tasks to execute.
 
 If a task document conflicts with `specification.md`, follow `specification.md` and report the mismatch to Person 4.
 
@@ -33,6 +34,7 @@ tasks/      Coordination documents; Person 4 maintains them
 - Worker agents modify only `worker/**`.
 - Frontend agents modify only `frontend/**`.
 - Platform agents own root configuration, `packages/**`, migrations, the root lockfile, and final integration.
+- Each owner may edit only its matching `tasks/<task>/TODO.md`; this is the sole exception to Person 4's ownership of `tasks/**`.
 - Never edit another owner's files merely to make a local task easier. Report a required contract change to Person 4.
 
 ## Required architecture
@@ -57,6 +59,7 @@ tasks/      Coordination documents; Person 4 maintains them
 
 ## Implementation rules
 
+- Keep the matching `tasks/<task>/TODO.md` current. Preserve separate `Implementation` and `Self-review` sections, add newly discovered required work, and mark `[x]` only after that item is actually implemented or its check has actually passed.
 - Reuse shared packages and frozen contracts; do not create competing schemas, clients, types, queue names, or environment variables.
 - Validate every API trust boundary and filter all user-owned data by the authenticated user.
 - Prefer the smallest implementation that satisfies the assigned acceptance checks. Do not add speculative abstractions or unrelated cleanup.
@@ -66,12 +69,13 @@ tasks/      Coordination documents; Person 4 maintains them
 
 ## Before handoff
 
-1. Run the task README's minimum checks.
-2. Run the owned workspace's typecheck, tests, and build when those scripts exist.
-3. Run `git diff --check` and review `git diff --stat`.
-4. Confirm the diff contains only owned files.
-5. Commit with a focused message and push the task branch if a remote is configured.
-6. Report:
+1. Reconcile the task README against the matching TODO and leave unfinished items unchecked.
+2. Run the task README's minimum checks.
+3. Run the owned workspace's typecheck, tests, and build when those scripts exist.
+4. Run `git diff --check` and review `git diff --stat`.
+5. Confirm the diff contains only owned files plus its own TODO.
+6. Commit with a focused message and push the task branch if a remote is configured.
+7. Report:
    - Changed files and behavior.
    - Commands and checks run.
    - Real integrations verified versus blocked by missing credentials.

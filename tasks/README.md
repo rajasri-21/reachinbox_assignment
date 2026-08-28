@@ -21,6 +21,17 @@ This folder divides the requirements in [`../specification.md`](../specification
 
 Do not edit another owner's files without asking them. Only Person 4 changes the root lockfile, Compose file, shared packages, migrations, or final project README.
 
+## Task TODO ledgers
+
+Every owner must maintain the `TODO.md` beside its task README:
+
+- Backend: [`backend/TODO.md`](backend/TODO.md)
+- Worker: [`worker/TODO.md`](worker/TODO.md)
+- Frontend: [`frontend/TODO.md`](frontend/TODO.md)
+- Platform: [`platform/TODO.md`](platform/TODO.md)
+
+Each ledger keeps separate `Implementation` and `Self-review` sections. Add required work discovered during implementation, but mark `[x]` only after the implementation is complete or the named check has actually passed. Unavailable credentials, an unrun integration, or code that merely looks correct stays unchecked. Each task owner may edit only its own TODO file; Person 4 continues to own every other file under `tasks/**`.
+
 ## One-time repository setup
 
 The repository currently starts on `master`. The coordinator should rename it before parallel work:
@@ -142,11 +153,12 @@ MAX_EMAILS_PER_HOUR
 
 Each owner:
 
-1. Runs the checks listed in their task README.
-2. Commits only owned files.
-3. Rebases once on the latest `origin/main` before opening the pull request.
-4. Pushes the task branch and opens a pull request with test evidence and remaining trade-offs.
-5. Leaves final merging to Person 4 after review.
+1. Reconciles its README with its TODO and leaves unfinished work unchecked.
+2. Runs the checks listed in its task README.
+3. Commits only owned files plus its own TODO.
+4. Rebases once on the latest `origin/main` before opening the pull request.
+5. Pushes the task branch and opens a pull request with test evidence and remaining trade-offs.
+6. Leaves final merging to Person 4 after review.
 
 Person 4 merges platform foundation first, then backend, worker, and frontend. The final integration commit must demonstrate login, Slack connection, scheduling, restart persistence, sending, search, and rate-limit rescheduling.
 
