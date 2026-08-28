@@ -6,4 +6,6 @@ export const redisConnection = new Redis(env.REDIS_URL, {
 });
 
 // Separate client for rate-limit Lua operations that should not interfere with BullMQ's blocking commands.
-export const redis = redisConnection;
+export const redis = new Redis(env.REDIS_URL, {
+  maxRetriesPerRequest: null,
+});

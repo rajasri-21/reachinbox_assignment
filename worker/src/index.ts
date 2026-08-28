@@ -3,7 +3,7 @@ import { EMAIL_QUEUE, type SendEmailJob } from "@reachinbox/contracts";
 import { prisma } from "@reachinbox/db";
 import { indexEmail } from "@reachinbox/search";
 import { env } from "./env.js";
-import { redisConnection } from "./redis.js";
+import { redisConnection, redis } from "./redis.js";
 import { searchClient } from "./search.js";
 import { verifyTransporter, closeTransporter } from "./transporter.js";
 import { processEmailJob } from "./processor.js";
@@ -121,6 +121,7 @@ async function shutdown(signal: string) {
   try {
     await worker.close();
     await closeTransporter();
+    await redis.quit();
     await redisConnection.quit();
     await prisma.$disconnect();
   } catch (err) {

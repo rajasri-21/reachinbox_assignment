@@ -11,6 +11,22 @@ const BACKOFF_DELAY_MS = 2000;
  * Re-adding an existing deterministic BullMQ job must be harmless.
  */
 export async function reconcileScheduledEmails(): Promise<number> {
+  // Recover orphans: rows left in processing after a crash never re-queue with scheduled-only scan.
+  // Reset them to scheduled before deterministic re-add so restart always recovers.
+  try {
+    const orphanReset = await prisma.email.updateMany({
+      where: { status: "processing" },
+      data: { status: "scheduled" },
+    });
+    if (orphanReset.count > 0) {
+      // eslint-disable-next-line no-console
+      console.log(`Recovered ${orphanReset.count} orphan processing emails to scheduled`);
+    }
+  } catch (err) {
+    // eslint-disable-next-line no-console
+    console.error("Failed to reset processing orphans", err);
+  }
+
   let reconciled = 0;
   let lastId: string | undefined = undefined;
 
@@ -19,7 +35,7 @@ export async function reconcileScheduledEmails(): Promise<number> {
       ? await prisma.email.findMany({
           where: { status: "scheduled" },
           select: { id: true, scheduledAt: true },
-          orderBy: { scheduledAt: "asc" },
+          orderBy: [{ scheduledAt: "asc" }, { id: "asc" }],
           take: BATCH_SIZE,
           cursor: { id: lastId },
           skip: 1,
@@ -27,7 +43,7 @@ export async function reconcileScheduledEmails(): Promise<number> {
       : await prisma.email.findMany({
           where: { status: "scheduled" },
           select: { id: true, scheduledAt: true },
-          orderBy: { scheduledAt: "asc" },
+          orderBy: [{ scheduledAt: "asc" }, { id: "asc" }],
           take: BATCH_SIZE,
         });
 
