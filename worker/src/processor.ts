@@ -44,11 +44,8 @@ export async function processEmailJob(job: Job<SendEmailJob>): Promise<void> {
     if (claimed.count === 0) {
       const fresh = await prisma.email.findUnique({ where: { id: emailId } });
       if (fresh?.status === "sent") return;
-      // If fresh is still scheduled, another worker won race – retry by throwing
-      // so BullMQ will retry; but to avoid busy loop, just return and let next retry handle.
-      if (fresh?.status !== "processing" && fresh?.status !== "scheduled") {
-        return;
-      }
+      // Lost the race to another worker that claimed the same scheduled row — do not send twice.
+      return;
     }
   } else if (email.status !== "processing") {
     // For any other non-retriable state (e.g. failed already and attempts exhausted), skip.
@@ -96,8 +93,7 @@ export async function processEmailJob(job: Job<SendEmailJob>): Promise<void> {
 
     const delayMs = msUntilNextUtcHour();
     const timestamp = Date.now() + delayMs;
-    // job.token is present when job is in active state; use empty string fallback.
-    await job.moveToDelayed(timestamp, (job as unknown as { token?: string }).token ?? "");
+    await job.moveToDelayed(timestamp, job.token);
     throw new DelayedError(`Rate limited for sender ${email.sender.email}, delayed to next hour`);
   }
 
@@ -132,11 +128,11 @@ export async function processEmailJob(job: Job<SendEmailJob>): Promise<void> {
 
   const now = new Date();
 
-  // Update PostgreSQL to sent with atomic safeguard (only if not already sent).
+  // Update PostgreSQL to sent with atomic guard to preserve idempotency.
   // Minimize SMTP-accepted-before-DB-update window by updating immediately after SMTP.
   try {
-    await prisma.email.update({
-      where: { id: emailId },
+    const updated = await prisma.email.updateMany({
+      where: { id: emailId, status: { not: "sent" } },
       data: {
         status: "sent",
         sentAt: now,
@@ -145,6 +141,10 @@ export async function processEmailJob(job: Job<SendEmailJob>): Promise<void> {
         failureReason: null,
       },
     });
+    if (updated.count === 0) {
+      // Already marked sent by a concurrent retry — treat as success.
+      return;
+    }
   } catch (err) {
     // If update fails after SMTP accepted, email has been sent but DB not updated.
     // This is the unavoidable window documented in README. Log and rethrow for retry;
