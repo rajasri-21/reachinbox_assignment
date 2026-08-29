@@ -62,6 +62,20 @@ export type EmailListQuery = {
   limit?: number;
 };
 
+export type ScheduleEmailRequest = {
+  senderEmail: string;
+  subject: string;
+  body: string;
+  recipients: string[];
+  startAt: string;
+  delayMs: number;
+  hourlyLimit: number;
+};
+
+export type ScheduleEmailResponse = {
+  scheduledCount: number;
+};
+
 export const api = {
   getMe: () => request<{ user: AuthUser }>("/api/auth/me"),
   googleLogin: (credential: string) =>
@@ -90,6 +104,12 @@ export const api = {
     const qs = params.toString();
     return request<EmailListResponse>(`/api/emails${qs ? `?${qs}` : ""}`);
   },
+
+  scheduleEmails: (payload: ScheduleEmailRequest) =>
+    request<ScheduleEmailResponse>("/api/emails/schedule", {
+      method: "POST",
+      body: JSON.stringify(payload),
+    }),
 };
 
 export { API_URL };

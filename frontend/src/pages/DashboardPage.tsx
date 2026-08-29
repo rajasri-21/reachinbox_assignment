@@ -10,6 +10,7 @@ import { useDebouncedValue } from "../hooks/useDebouncedValue";
 type Props = {
   activeTab: DashboardTab;
   onCompose: () => void;
+  refreshKey?: number;
 };
 
 function FilterIcon(props: React.SVGProps<SVGSVGElement>): React.JSX.Element {
@@ -29,7 +30,7 @@ function RefreshIcon(props: React.SVGProps<SVGSVGElement>): React.JSX.Element {
   );
 }
 
-export function DashboardPage({ activeTab, onCompose }: Props): React.JSX.Element {
+export function DashboardPage({ activeTab, onCompose, refreshKey = 0 }: Props): React.JSX.Element {
   const [query, setQuery] = React.useState("");
   const debouncedQ = useDebouncedValue(query, 350);
   const [page, setPage] = React.useState(1);
@@ -70,7 +71,7 @@ export function DashboardPage({ activeTab, onCompose }: Props): React.JSX.Elemen
     } finally {
       if (id === fetchIdRef.current) setLoading(false);
     }
-  }, [activeTab, debouncedQ, page, limit]);
+  }, [activeTab, debouncedQ, page, limit, refreshKey]);
 
   React.useEffect(() => {
     void fetchEmails();

@@ -28,16 +28,27 @@ Mark an item complete only after the implementation or check is actually complet
 - [x] Reusable components: EmailTable, EmailStatusBadge, SearchInput, Pagination, LoadingState, EmptyState, ErrorState
 - [x] Reused Phase 1 shell (Sidebar/AppLayout) extended, not rewritten; responsive table overflow, focus/keyboard/a11y checked
 
+## Phase 3 — Compose New Email + CSV/Text Lead Upload (current scope)
+
+- [x] Create frontend/src/lib/csv.ts with typed parseLeads(text) — comma/newline split, trim, ignore empties, validate, dedupe case-insensitively preserving first casing, return { valid, invalid }
+- [x] Extend frontend/src/services/api.ts with scheduleEmails(payload: ScheduleEmailRequest) POST /api/emails/schedule, credentials:include, VITE_API_URL, typed errors, no any
+- [x] Build ComposeEmail modal/drawer component (frontend/src/components/compose/ComposeEmail.tsx) matching 05-compose-email.png / 06-csv-upload.png: overlay, focus trap/return, Esc + close button, accessible labels, focus states, responsive
+- [x] Implement compose form fields with validation: senderEmail (required, email format, trim), subject (required trim), body (required trim textarea), startAt (datetime-local required future -> ISO8601), delayMs (int 0-86400000, ms unit), hourlyLimit (int 1-100000)
+- [x] Implement CSV/TXT upload via FileReader.readAsText(), accept .csv .txt, parse via parseLeads, display valid count (e.g. "245 emails detected"), invalid count/list, empty-file error, no-valid-emails error, >5000 guard
+- [x] Wire Compose New Email button in App/Sidebar to open modal (replace Phase 2 alert), handle cancel/close reset, loading state (disable Schedule, spinner, prevent double submit), preserve values on error
+- [x] Handle API responses: 201 show success "Successfully scheduled ${count} emails." + close/reset + refresh Scheduled tab; 400 show validation error; 401 redirect/login; 500/network show error
+- [x] Keep user on dashboard, no full reload; add toast/feedback component reused
+
 ## Implementation (full scope — later phases)
 
 - [ ] Add real Google Identity Services login and send the credential to the backend.
 - [ ] Show authenticated user name, email, avatar, and logout.
 - [x] Build Scheduled and Sent tabs with loading, empty, error, and populated states.
 - [x] Keep backend calls in one typed API module with credentials enabled.
-- [ ] Build the compose flow for sender, subject, body, start, delay, and hourly limit.
-- [ ] Extract, trim, validate, and deduplicate addresses from CSV/text files.
-- [ ] Show detected count and invalid/empty-file feedback.
-- [ ] Submit the frozen scheduling payload and display success/error feedback.
+- [x] Build the compose flow for sender, subject, body, start, delay, and hourly limit.
+- [x] Extract, trim, validate, and deduplicate addresses from CSV/text files.
+- [x] Show detected count and invalid/empty-file feedback.
+- [x] Submit the frozen scheduling payload and display success/error feedback.
 - [ ] Add Slack connection status, connect redirect, and disconnect behavior.
 - [x] Add responsive accessible Tailwind styling.
 
@@ -46,8 +57,8 @@ Mark an item complete only after the implementation or check is actually complet
 - [x] Frontend typecheck and production build pass.
 - [ ] Logged-out users see login; logged-in users see the dashboard.
 - [ ] User identity and logout work with a real Google login.
-- [ ] Recipient parsing handles trimming, duplicates, invalid values, and empty files.
-- [ ] Compose submits the exact frozen schedule contract.
+- [x] Recipient parsing handles trimming, duplicates, invalid values, and empty files.
+- [x] Compose submits the exact frozen schedule contract.
 - [x] Scheduled, sent, failed, loading, empty, and error states are verified.
 - [ ] Real Slack connect/disconnect state is reflected after OAuth redirect.
 - [x] Keyboard access, visible labels, focus states, and mobile layout are checked.
