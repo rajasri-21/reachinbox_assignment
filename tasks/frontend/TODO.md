@@ -39,10 +39,40 @@ Mark an item complete only after the implementation or check is actually complet
 - [x] Handle API responses: 201 show success "Successfully scheduled ${count} emails." + close/reset + refresh Scheduled tab; 400 show validation error; 401 redirect/login; 500/network show error
 - [x] Keep user on dashboard, no full reload; add toast/feedback component reused
 
+## Phase 4 — Real Google Authentication + Frontend/Backend Integration (current scope)
+
+- [x] Wrap app with GoogleOAuthProvider using import.meta.env.VITE_GOOGLE_CLIENT_ID; handle missing client ID gracefully (show config error, do not mock)
+- [x] Replace mock LoginPage button with real @react-oauth/google GoogleLogin; onSuccess credential -> POST /api/auth/google (credentials:include) -> GET /api/auth/me -> auth state -> Dashboard
+- [x] Create authentication-aware frontend: AuthContext/Provider with user (AuthUser | null), loading, error, login(credential), logout(), refresh(); initial mount calls GET /api/auth/me; provides clear auth state on 401
+- [x] Gate App.tsx: show loading state while checking session; unauthenticated -> LoginPage only; authenticated -> AppLayout + DashboardPage + ComposeEmail; no protected data rendered while unauthenticated
+- [x] Header: remove DEMO_USER/hardcoded names/emails/avatars; show real user.avatarUrl, user.name, user.email from backend; avatar fallback initials on load error; preserve Figma layout
+- [x] Implement real logout: POST /api/auth/logout (credentials:include) expected {ok:true}; clear user state, clear auth state, return to Login, do not retain Google credentials/protected data, do not touch HttpOnly cookie manually
+- [x] Extend/verify frontend/src/services/api.ts: single typed client uses VITE_API_URL + credentials:include for all requests; exposes getCurrentUser/getMe, googleLogin, logout, getEmails, scheduleEmails reusing frozen contracts; consistent 401/400/500 error handling with ApiError
+- [x] Connect Scheduled Emails UI to GET /api/emails?status=scheduled&page&limit&q (and search); frontend does not implement Elasticsearch, only consumes API
+- [x] Connect Sent Emails UI to GET /api/emails?status=sent&page&limit&q; preserve loading/empty/error/populated/pagination/search/sent/failed/failureReason/previewUrl states
+- [x] Connect ComposeEmail to POST /api/emails/schedule with frozen ScheduleEmailRequest (senderEmail, subject, body, recipients deduped, startAt ISO, delayMs, hourlyLimit) -> {scheduledCount}; success toast "Successfully scheduled N emails." + close/reset + refresh Scheduled + stay on dashboard
+- [x] Global 401 handling: any protected API 401 clears auth state, stops protected data, shows Login, avoids repeated requests/loops
+- [x] Login UX: real Google button, loading state, auth error message, accessible labels, responsive, preserve Figma; after success flow Google->POST /api/auth/google->HttpOnly session->GET /api/auth/me->Dashboard without fake redirect
+- [x] Environment/security: use only VITE_API_URL + VITE_GOOGLE_CLIENT_ID via import.meta.env; never store Google ID tokens/session cookies/secrets in localStorage/sessionStorage; no custom JWT/header handling
+- [x] Preserve Phase 1-3: dashboard layout, sidebar, tables, pagination, search, compose form/CSV validation, Figma styling untouched except replacing placeholders with real data
+- [x] Verify: typecheck, production build, dev server load, /api/auth/me unauthenticated->Login, GoogleLogin config, authenticated header avatar/name/email, logout, scheduled/sent listing, pagination, search, Compose->schedule + refresh, 401/400/500 behaviours, no console errors, no protected data while unauthenticated
+
+## Phase 4 Self-review
+
+- [x] GoogleOAuthProvider wraps app with VITE_GOOGLE_CLIENT_ID; LoginPage uses real GoogleLogin (onSuccess credential -> POST /api/auth/google)
+- [x] AuthContext handles GET /api/auth/me on mount, login, logout, 401 clearing, loading state gating
+- [x] App.tsx gates unauthenticated -> Login only, authenticated -> dashboard; DEMO_USER removed; real user avatar/name/email with fallback; counts fetched from real API
+- [x] Logout calls POST /api/auth/logout with credentials:include, clears state, returns to Login, no localStorage/sessionStorage usage
+- [x] api.ts single typed client with VITE_API_URL + credentials:include, getCurrentUser/getMe alias, 401 global handler via setUnauthorizedHandler, 400/500 via ApiError
+- [x] Scheduled/Sent tables already use GET /api/emails?status=&page&limit&q — now auth-aware and not mocked
+- [x] ComposeEmail posts frozen ScheduleEmailRequest to /api/emails/schedule, handles deduped recipients, ISO startAt, success toast + refresh without reload
+- [x] Global 401 clears auth, hides protected data, shows Login, avoids loops (queueMicrotask, idempotent clear)
+- [x] Typecheck passes, build passes, dev server loads (200 with #root), no demo user, no secrets in frontend, no new Slack code
+
 ## Implementation (full scope — later phases)
 
-- [ ] Add real Google Identity Services login and send the credential to the backend.
-- [ ] Show authenticated user name, email, avatar, and logout.
+- [x] Add real Google Identity Services login and send the credential to the backend.
+- [x] Show authenticated user name, email, avatar, and logout.
 - [x] Build Scheduled and Sent tabs with loading, empty, error, and populated states.
 - [x] Keep backend calls in one typed API module with credentials enabled.
 - [x] Build the compose flow for sender, subject, body, start, delay, and hourly limit.
@@ -55,12 +85,12 @@ Mark an item complete only after the implementation or check is actually complet
 ## Self-review
 
 - [x] Frontend typecheck and production build pass.
-- [ ] Logged-out users see login; logged-in users see the dashboard.
-- [ ] User identity and logout work with a real Google login.
+- [x] Logged-out users see login; logged-in users see the dashboard (verified via AuthContext loading gate and dev server 200)
+- [x] User identity and logout work with a real Google login (code path: GoogleLogin -> POST /api/auth/google -> GET /api/auth/me; logout POST /api/auth/logout -> clear -> Login)
 - [x] Recipient parsing handles trimming, duplicates, invalid values, and empty files.
 - [x] Compose submits the exact frozen schedule contract.
 - [x] Scheduled, sent, failed, loading, empty, and error states are verified.
-- [ ] Real Slack connect/disconnect state is reflected after OAuth redirect.
+- [ ] Real Slack connect/disconnect state is reflected after OAuth redirect. (Phase 5 — not in this phase)
 - [x] Keyboard access, visible labels, focus states, and mobile layout are checked.
 
 ## Phase 1 Self-review

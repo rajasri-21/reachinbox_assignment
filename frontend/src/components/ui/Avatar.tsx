@@ -8,6 +8,7 @@ type Props = {
 };
 
 export function Avatar({ name, src, size = 32, className }: Props): React.JSX.Element {
+  const [imgError, setImgError] = React.useState(false);
   const fallback = name
     .split(" ")
     .map((part) => part[0])
@@ -15,13 +16,18 @@ export function Avatar({ name, src, size = 32, className }: Props): React.JSX.El
     .slice(0, 2)
     .toUpperCase();
 
-  if (src) {
+  React.useEffect(() => {
+    setImgError(false);
+  }, [src]);
+
+  if (src && !imgError) {
     return (
       <img
         src={src}
         alt={name}
         width={size}
         height={size}
+        onError={() => setImgError(true)}
         className={`rounded-full object-cover shrink-0 ${className ?? ""}`}
         style={{ width: size, height: size }}
       />

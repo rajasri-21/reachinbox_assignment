@@ -6,6 +6,7 @@ import { EmailTable } from "../components/emails/EmailTable";
 import { LoadingState, ErrorState, EmptyState } from "../components/emails/EmailStates";
 import { api, ApiError, type EmailListItem } from "../services/api";
 import { useDebouncedValue } from "../hooks/useDebouncedValue";
+import { useAuth } from "../context/AuthContext";
 
 type Props = {
   activeTab: DashboardTab;
@@ -31,6 +32,7 @@ function RefreshIcon(props: React.SVGProps<SVGSVGElement>): React.JSX.Element {
 }
 
 export function DashboardPage({ activeTab, onCompose, refreshKey = 0 }: Props): React.JSX.Element {
+  const { user } = useAuth();
   const [query, setQuery] = React.useState("");
   const debouncedQ = useDebouncedValue(query, 350);
   const [page, setPage] = React.useState(1);
@@ -49,6 +51,7 @@ export function DashboardPage({ activeTab, onCompose, refreshKey = 0 }: Props): 
   }, [activeTab, debouncedQ]);
 
   const fetchEmails = React.useCallback(async () => {
+    if (!user) return;
     const id = ++fetchIdRef.current;
     setLoading(true);
     setError(null);
@@ -62,16 +65,18 @@ export function DashboardPage({ activeTab, onCompose, refreshKey = 0 }: Props): 
     } catch (e) {
       if (id !== fetchIdRef.current) return;
       const err = e instanceof ApiError ? e : new Error(e instanceof Error ? e.message : "Failed to load emails");
-      // 401 would be handled by auth layer in later phases; surface as error for now but keep UX friendly
       if (err instanceof ApiError && err.status === 401) {
-        setError("Session expired. Please log in again.");
-      } else {
-        setError(err.message);
+        // Global 401 handler in AuthContext will clear user and show Login;
+        // avoid showing stale protected data and avoid loops — just stop loading.
+        setEmails([]);
+        setTotal(0);
+        return;
       }
+      setError(err.message);
     } finally {
       if (id === fetchIdRef.current) setLoading(false);
     }
-  }, [activeTab, debouncedQ, page, limit, refreshKey]);
+  }, [activeTab, debouncedQ, page, limit, refreshKey, user]);
 
   React.useEffect(() => {
     void fetchEmails();

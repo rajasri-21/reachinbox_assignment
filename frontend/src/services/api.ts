@@ -1,6 +1,7 @@
 /**
  * Typed API module — owns all backend calls.
  * Keeps credentials handling in one place.
+ * All requests use credentials: 'include' and VITE_API_URL.
  */
 
 const API_URL = import.meta.env.VITE_API_URL ?? "http://localhost:3000";
@@ -16,6 +17,19 @@ export class ApiError extends Error {
   }
 }
 
+let unauthorizedHandler: (() => void) | null = null;
+
+export function setUnauthorizedHandler(handler: (() => void) | null): void {
+  unauthorizedHandler = handler;
+}
+
+function notifyUnauthorized(): void {
+  if (unauthorizedHandler) {
+    // Avoid synchronous re-entry / render during fetch
+    queueMicrotask(() => unauthorizedHandler?.());
+  }
+}
+
 async function request<T>(path: string, options: ApiOptions = {}): Promise<T> {
   const url = `${API_URL}${path}`;
   const res = await fetch(url, {
@@ -27,6 +41,11 @@ async function request<T>(path: string, options: ApiOptions = {}): Promise<T> {
     },
   });
   if (!res.ok) {
+    if (res.status === 401) {
+      // Global 401 handling — clear auth state, stop protected data, avoid loops.
+      // Handler is idempotent; login failures simply keep user null.
+      notifyUnauthorized();
+    }
     const body = (await res.json().catch(() => null)) as { error?: string; message?: string } | null;
     const message = body?.error ?? body?.message ?? `Request failed: ${res.status}`;
     throw new ApiError(message, res.status);
@@ -78,6 +97,7 @@ export type ScheduleEmailResponse = {
 
 export const api = {
   getMe: () => request<{ user: AuthUser }>("/api/auth/me"),
+  getCurrentUser: () => request<{ user: AuthUser }>("/api/auth/me"),
   googleLogin: (credential: string) =>
     request<{ user: AuthUser }>("/api/auth/google", {
       method: "POST",
